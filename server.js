@@ -165,7 +165,7 @@ app.get('*', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.ht
 // ============================================================
 // START
 // ============================================================
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 initDB()
   .then(() => app.listen(PORT, () => console.log(`Lager 157 CRM running on port ${PORT}`)))
   .catch(err => { console.error('DB init failed:', err); process.exit(1); });
