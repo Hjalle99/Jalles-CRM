@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LAGER 157 EXPANSION CRM</title>
+<style>
+:root {
+  --bg:#111214;--surface:#191b1f;--surface2:#21242a;--border:#2a2d33;
+  --amber:#ffffff;--amber-dim:#aaaaaa;--green:#22c55e;--green-dim:#14532d;
+  --red:#ef4444;--red-dim:#7f1d1d;--yellow:#eab308;--yellow-dim:#713f12;
+  --text:#e2e2e2;--muted:#6b7280;--mono:Arial,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px;line-height:1.5;min-height:100vh;}
+.nav-bar{background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;position:sticky;top:0;z-index:50;gap:0;}
+.nav-logo{font-size:11px;letter-spacing:0.15em;color:var(--amber);font-weight:bold;padding:12px 20px 12px 0;border-right:1px solid var(--border);margin-right:16px;white-space:nowrap;}
+.tab-btn{background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;padding:13px 16px 11px;transition:color 0.15s,border-color 0.15s;}
+.tab-btn:hover{color:var(--text);}
+.tab-btn.active{color:var(--amber);border-bottom-color:var(--amber);}
+.tab-badge{display:inline-block;background:var(--amber-dim);color:var(--amber);border-radius:8px;font-size:9px;padding:0 5px;margin-left:5px;vertical-align:middle;}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-left:12px;vertical-align:middle;}
+.sync-dot.syncing{background:var(--yellow);animation:pulse 0.8s infinite;}
+.sync-dot.error{background:var(--red);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.view{display:none;padding:16px;max-width:1400px;margin:0 auto;}
+.view.active{display:block;}
+.section{margin-bottom:28px;}
+.section-label{font-size:10px;letter-spacing:0.2em;color:var(--amber);text-transform:uppercase;margin-bottom:10px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+.crm-header{display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid var(--amber);padding-bottom:12px;margin-bottom:20px;flex-wrap:wrap;gap:8px;}
+.crm-title{font-size:18px;font-weight:bold;color:var(--amber);letter-spacing:0.05em;}
+.crm-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.market-badges{display:flex;gap:6px;margin-top:6px;justify-content:flex-end;flex-wrap:wrap;}
+.badge{background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:2px 8px;font-size:10px;color:var(--muted);}
+.kill-panel{background:rgba(239,68,68,0.07);border:1px solid var(--red);border-radius:4px;padding:12px 14px;margin-bottom:28px;}
+.kill-panel .section-label{color:var(--red);border-bottom-color:rgba(239,68,68,0.3);}
+.kill-list{display:flex;flex-direction:column;gap:6px;}
+.kill-item{display:flex;align-items:flex-start;gap:10px;font-size:12px;}
+.kill-dot{width:8px;height:8px;background:var(--red);border-radius:50%;flex-shrink:0;margin-top:4px;}
+.kill-city{color:var(--red);font-weight:bold;min-width:100px;}
+.kill-reason{color:#fca5a5;}
+.pipeline-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;}
+@media(max-width:900px){.pipeline-grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:500px){.pipeline-grid{grid-template-columns:1fr;}}
+.pipeline-col{background:var(--surface);border:1px solid var(--border);border-radius:4px;overflow:hidden;}
+.pipeline-col-header{background:var(--surface2);padding:7px 10px;font-size:10px;letter-spacing:0.12em;color:var(--amber-dim);text-transform:uppercase;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+.pipeline-col-count{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:0 6px;font-size:10px;color:var(--muted);}
+.pipeline-cards{padding:8px;display:flex;flex-direction:column;gap:6px;min-height:60px;}
+.card{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px 10px;cursor:pointer;transition:border-color 0.15s;position:relative;}
+.card:hover{border-color:var(--amber-dim);}
+.card.status-go{border-left:3px solid var(--green);}
+.card.status-flag{border-left:3px solid var(--yellow);}
+.card.status-nogo{border-left:3px solid var(--red);}
+.card-city{font-size:12px;font-weight:bold;color:var(--text);}
+.card-meta{font-size:10px;color:var(--muted);margin-top:3px;}
+.card-days{font-size:10px;color:var(--amber-dim);margin-top:4px;}
+.status-pill{position:absolute;top:6px;right:8px;font-size:9px;letter-spacing:0.1em;padding:1px 6px;border-radius:2px;text-transform:uppercase;}
+.pill-go{background:var(--green-dim);color:var(--green);}
+.pill-flag{background:var(--yellow-dim);color:var(--yellow);}
+.pill-nogo{background:var(--red-dim);color:var(--red);}
+.score-table-wrap{overflow-x:auto;}
+.score-table{width:100%;border-collapse:collapse;font-size:11px;}
+.score-table th{background:var(--surface2);color:var(--muted);font-weight:normal;letter-spacing:0.1em;text-transform:uppercase;font-size:9px;padding:7px 10px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap;}
+.score-table td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.score-table tr:last-child td{border-bottom:none;}
+.score-table tr:hover td{background:var(--surface2);}
+.score-bar{display:flex;align-items:center;gap:6px;}
+.bar-track{width:60px;height:5px;background:var(--border);border-radius:2px;overflow:hidden;flex-shrink:0;}
+.bar-fill{height:100%;border-radius:2px;}
+.score-num{color:var(--muted);font-size:10px;min-width:36px;}
+.verdict-go{color:var(--green);font-weight:bold;}
+.verdict-flag{color:var(--yellow);font-weight:bold;}
+.verdict-nogo{color:var(--red);font-weight:bold;}
+.ttm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
+.ttm-card{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:12px;}
+.ttm-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+.ttm-city{font-size:13px;font-weight:bold;color:var(--text);}
+.ttm-market{font-size:10px;color:var(--muted);margin-top:1px;}
+.ttm-days-left{font-size:20px;font-weight:bold;line-height:1;}
+.ttm-days-label{font-size:9px;color:var(--muted);letter-spacing:0.1em;}
+.ttm-green{color:var(--green);}.ttm-yellow{color:var(--yellow);}.ttm-red{color:var(--red);}
+.ttm-progress{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:10px;}
+.ttm-progress-fill{height:100%;border-radius:2px;}
+.milestones{display:flex;flex-direction:column;gap:5px;}
+.milestone{display:flex;align-items:center;gap:8px;font-size:10px;}
+.ms-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.ms-done{background:var(--green);}.ms-active{background:var(--amber);}.ms-pending{background:var(--border);}
+.ms-label{color:var(--muted);flex:1;}.ms-date{color:var(--muted);font-size:9px;}
+.reg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;}
+.reg-card{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:12px;}
+.reg-market{font-size:11px;font-weight:bold;color:var(--amber);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.reg-item{display:flex;align-items:flex-start;gap:8px;margin-bottom:7px;font-size:11px;}
+.reg-icon{flex-shrink:0;margin-top:1px;}
+.reg-text{color:var(--text);}
+.reg-text span{color:var(--muted);font-size:10px;display:block;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:200;align-items:center;justify-content:center;padding:16px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--amber-dim);border-radius:6px;width:100%;max-width:580px;max-height:90vh;overflow-y:auto;padding:20px;}
+.modal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;}
+.modal-title{font-size:16px;font-weight:bold;color:var(--amber);}
+.modal-close{background:none;border:1px solid var(--border);color:var(--muted);cursor:pointer;padding:2px 8px;font-family:var(--mono);font-size:12px;border-radius:3px;}
+.modal-close:hover{border-color:var(--red);color:var(--red);}
+.modal-section{margin-bottom:14px;}
+.modal-section-title{font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;}
+.modal-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border);font-size:11px;}
+.modal-row:last-child{border-bottom:none;}
+.modal-key{color:var(--muted);}
+.modal-val{color:var(--text);font-weight:bold;}
+/* SCORECARD */
+.sc-shell{max-width:720px;margin:0 auto;padding-top:16px;}
+.sc-header{border-bottom:1px solid var(--amber);padding-bottom:14px;margin-bottom:8px;}
+.sc-title{font-size:18px;font-weight:bold;color:var(--amber);letter-spacing:0.05em;}
+.sc-sub{font-size:11px;color:var(--muted);margin-top:3px;}
+.sc-rules{font-size:11px;color:var(--muted);line-height:1.7;background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:10px 14px;margin-bottom:16px;}
+.sc-card{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:16px;margin-bottom:14px;}
+.sc-card-title{font-size:10px;letter-spacing:0.15em;color:var(--amber);text-transform:uppercase;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;}
+@media(max-width:500px){.form-row{grid-template-columns:1fr;}}
+.form-row.full{grid-template-columns:1fr;}
+.form-field{display:flex;flex-direction:column;gap:4px;}
+.form-label{font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);}
+.form-input{background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 10px;width:100%;transition:border-color 0.15s;}
+.form-input:focus{outline:none;border-color:var(--amber-dim);}
+.form-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%236b7280'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-color:var(--bg);padding-right:28px;}
+.form-input option{background:var(--surface);}
+.crit-block{border:1px solid var(--border);border-radius:4px;padding:14px;margin-bottom:10px;background:var(--bg);}
+.crit-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:wrap;}
+.crit-info{flex:1;}
+.crit-name-row{display:flex;align-items:center;gap:8px;margin-bottom:3px;flex-wrap:wrap;}
+.crit-name{font-size:13px;font-weight:bold;color:var(--text);}
+.weight-badge{display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:3px;padding:1px 7px;font-size:10px;color:var(--amber);white-space:nowrap;}
+.weight-input{background:transparent;border:none;color:var(--amber);font-family:var(--mono);font-size:10px;width:20px;text-align:center;padding:0;}
+.weight-input:focus{outline:none;}
+.crit-desc{font-size:11px;color:var(--muted);}
+.crit-rationale{font-size:10px;color:var(--amber-dim);font-style:italic;margin-top:2px;}
+.score-btns{display:flex;gap:6px;align-items:center;flex-shrink:0;}
+.score-btn{width:36px;height:36px;border-radius:3px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-family:var(--mono);font-size:13px;font-weight:bold;cursor:pointer;transition:all 0.12s;display:flex;align-items:center;justify-content:center;}
+.score-btn:hover{border-color:var(--amber-dim);color:var(--text);}
+.score-btn.active-1{background:var(--red-dim);border-color:var(--red);color:var(--red);}
+.score-btn.active-2{background:rgba(239,68,68,0.15);border-color:#f87171;color:#f87171;}
+.score-btn.active-3{background:var(--yellow-dim);border-color:var(--yellow);color:var(--yellow);}
+.score-btn.active-4{background:rgba(34,197,94,0.12);border-color:#4ade80;color:#4ade80;}
+.score-btn.active-5{background:var(--green-dim);border-color:var(--green);color:var(--green);}
+.crit-result{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);font-size:10px;}
+.crit-result-label{color:var(--muted);}
+.crit-result-val{color:var(--text);font-weight:bold;}
+.kill-check{display:flex;align-items:flex-start;gap:10px;padding:11px 12px;background:var(--bg);border:1px solid var(--border);border-radius:3px;margin-bottom:8px;cursor:pointer;transition:border-color 0.15s;}
+.kill-check:hover{border-color:rgba(239,68,68,0.4);}
+.kill-check.triggered{border-color:var(--red);background:rgba(239,68,68,0.05);}
+.kill-check input[type=checkbox]{accent-color:var(--red);width:14px;height:14px;flex-shrink:0;margin-top:2px;cursor:pointer;}
+.kill-check-label{font-size:12px;color:var(--text);}
+.verdict-box{border-radius:4px;padding:18px;margin-bottom:14px;text-align:center;border:1px solid var(--border);background:var(--bg);transition:all 0.3s;}
+.verdict-box.go{border-color:var(--green);background:rgba(34,197,94,0.06);}
+.verdict-box.flag{border-color:var(--yellow);background:rgba(234,179,8,0.06);}
+.verdict-box.nogo{border-color:var(--red);background:rgba(239,68,68,0.07);}
+.verdict-box.kill{border-color:var(--red);background:rgba(239,68,68,0.1);}
+.verdict-label{font-size:22px;font-weight:bold;letter-spacing:0.06em;margin-bottom:6px;}
+.verdict-label.go{color:var(--green);}.verdict-label.flag{color:var(--yellow);}.verdict-label.nogo,.verdict-label.kill{color:var(--red);}
+.verdict-score-row{display:flex;align-items:center;justify-content:center;gap:16px;margin:8px 0 4px;flex-wrap:wrap;}
+.verdict-pct{font-size:28px;font-weight:bold;line-height:1;}
+.verdict-pct.go{color:var(--green);}.verdict-pct.flag{color:var(--yellow);}.verdict-pct.nogo,.verdict-pct.kill{color:var(--red);}
+.verdict-bar-wrap{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin:8px 0 4px;}
+.verdict-bar-fill{height:100%;border-radius:3px;transition:width 0.4s,background 0.4s;}
+.verdict-thresholds{display:flex;justify-content:space-between;font-size:9px;color:var(--border);margin-bottom:4px;position:relative;}
+.verdict-thresholds::before{content:'';position:absolute;left:55%;top:-10px;height:6px;width:1px;background:var(--border);}
+.verdict-thresholds::after{content:'';position:absolute;left:80%;top:-10px;height:6px;width:1px;background:var(--border);}
+.verdict-desc{font-size:11px;color:var(--muted);margin-top:4px;}
+.btn-submit{width:100%;background:var(--green-dim);border:1px solid var(--green);color:var(--green);font-family:var(--mono);font-size:13px;letter-spacing:0.1em;font-weight:bold;text-transform:uppercase;padding:13px;border-radius:4px;cursor:pointer;transition:background 0.15s;}
+.btn-submit:hover:not(:disabled){background:rgba(34,197,94,0.2);}
+.btn-submit:disabled{opacity:0.35;cursor:not-allowed;}
+.btn-reset{width:100%;background:none;border:1px solid var(--border);color:var(--muted);font-family:var(--mono);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;padding:8px;border-radius:4px;cursor:pointer;margin-top:8px;transition:border-color 0.15s;}
+.btn-reset:hover{border-color:var(--muted);color:var(--text);}
+.success-banner{display:none;background:rgba(34,197,94,0.1);border:1px solid var(--green);border-radius:4px;padding:14px 16px;text-align:center;margin-bottom:14px;}
+.success-banner.show{display:block;}
+.success-banner-title{color:var(--green);font-weight:bold;font-size:14px;margin-bottom:4px;}
+.success-banner-sub{color:var(--muted);font-size:11px;}
+.footer{margin-top:32px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:10px;color:var(--muted);flex-wrap:wrap;gap:6px;}
+</style>
+</head>
+<body>
+
+<div class="nav-bar">
+  <div class="nav-logo">LAGER 157 EXPANSION CRM</div>
+  <button class="tab-btn active" onclick="switchTab('scorecard',this)">⬡ Gate 1 Scorecard</button>
+  <button class="tab-btn" onclick="switchTab('crm',this)" id="crm-tab-btn">⬡ CRM Pipeline <span class="tab-badge" id="crm-count">…</span></button>
+  <span class="sync-dot" id="sync-dot" title="Synkstatus"></span>
+</div>
+
+<!-- VIEW 1: GATE 1 SCORECARD -->
+<div class="view active" id="view-scorecard">
+<div class="sc-shell">
+  <div class="sc-header">
+    <div class="sc-title">GATE 1 — PLATSANALYS & KVALIFICERING</div>
+    <div class="sc-sub">Fyll i bedömningen. GO-verdict skapar automatiskt en lead i CRM-pipeline.</div>
+  </div>
+  <div class="sc-rules">
+    Poängsätt varje kriterium 1–5. Vikten speglar hur kritiskt kriteriet är.<br>
+    Resultatet räknas som andel av maxpoäng: <strong style="color:var(--green)">grönt ≥ 80 %</strong>, <strong style="color:var(--yellow)">gult 55–79 %</strong>, <strong style="color:var(--red)">rött &lt; 55 %</strong>.<br>
+    Ett läge med kritisk kill-switch faller oavsett poäng.
+  </div>
+  <div class="success-banner" id="success-banner">
+    <div class="success-banner-title" id="success-title"></div>
+    <div class="success-banner-sub" id="success-sub"></div>
+  </div>
+  <div class="sc-card">
+    <div class="sc-card-title">Grundinformation</div>
+    <div class="form-row">
+      <div class="form-field"><label class="form-label">Stad / Ort *</label><input class="form-input" id="sc-city" type="text" placeholder="t.ex. Bremen" oninput="updateVerdict()"></div>
+      <div class="form-field"><label class="form-label">Marknad *</label><select class="form-input form-select" id="sc-market" onchange="updateVerdict()"><option value="">Välj marknad…</option></select></div>
+    </div>
+    <div class="form-row">
+      <div class="form-field"><label class="form-label">Yta (kvm)</label><input class="form-input" id="sc-sqm" type="number" placeholder="t.ex. 750" min="0"></div>
+      <div class="form-field"><label class="form-label">Hyra inkl. övriga kostnader (EUR/kvm/mån)</label><input class="form-input" id="sc-rent" type="number" placeholder="t.ex. 9.5" step="0.1" min="0"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-field"><label class="form-label">Fastighet / Butikscentrum</label><input class="form-input" id="sc-property" type="text" placeholder="t.ex. FMZ Norderstedt"></div>
+      <div class="form-field"><label class="form-label">Ansvarig person</label><input class="form-input" id="sc-owner" type="text" placeholder="t.ex. Anna Svensson"></div>
+    </div>
+    <div class="form-row full"><div class="form-field"><label class="form-label">Anteckningar / Kontext</label><textarea class="form-input" id="sc-notes" rows="2" style="resize:vertical" placeholder="Observationer på plats…"></textarea></div></div>
+  </div>
+  <div class="sc-card">
+    <div class="sc-card-title">Scorecard — 7 Kriterier</div>
+    <div id="criteria-container"></div>
+  </div>
+  <div class="sc-card" style="border-color:rgba(239,68,68,0.25)">
+    <div class="sc-card-title" style="color:var(--red);border-bottom-color:rgba(239,68,68,0.3)">⚡ Kritiska Kill-Switches (No-Go)</div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:12px">Är svaret "ja" på någon av dessa faller hela caset, oavsett poäng.</p>
+    <label class="kill-check" id="kc-0"><input type="checkbox" id="ks-0" onchange="toggleKill(0)"><span class="kill-check-label">Business case: medför efter förhandling för hög risk i förhållande till reward</span></label>
+    <label class="kill-check" id="kc-1"><input type="checkbox" id="ks-1" onchange="toggleKill(1)"><span class="kill-check-label">Konkurrensklausuler: hindrar för oss kritiska delar i vårt koncept</span></label>
+    <label class="kill-check" id="kc-2"><input type="checkbox" id="ks-2" onchange="toggleKill(2)"><span class="kill-check-label">Tidsplan: är inte i linje med våra strategier och processer</span></label>
+  </div>
+  <div class="verdict-box" id="verdict-box">
+    <div class="verdict-label" id="verdict-label">—</div>
+    <div class="verdict-score-row">
+      <div><div class="verdict-pct" id="verdict-pct">—</div><div style="font-size:9px;color:var(--muted);letter-spacing:0.1em;text-align:center">AV MAX</div></div>
+      <div style="text-align:left"><div style="font-size:11px;color:var(--muted)" id="verdict-pts-text">—</div><div style="font-size:11px;color:var(--muted)" id="verdict-max-text">—</div></div>
+    </div>
+    <div class="verdict-bar-wrap"><div class="verdict-bar-fill" id="verdict-fill" style="width:0%;background:var(--border)"></div></div>
+    <div class="verdict-thresholds"><span>0 %</span><span style="position:absolute;left:53%">55 %</span><span style="position:absolute;left:78%">80 %</span><span style="margin-left:auto">100 %</span></div>
+    <div class="verdict-desc" id="verdict-desc">Poängsätt kriterierna ovan för att se resultatet</div>
+  </div>
+  <button class="btn-submit" id="btn-submit" onclick="submitGate1()" disabled>✓ Skapa lead i CRM (Gate 1)</button>
+  <button class="btn-reset" onclick="resetForm()">↺ Rensa formulär</button>
+  <div class="footer"><span>LAGER 157 EXPANSION CRM</span><span id="sc-footer-status">Ansluter…</span></div>
+</div>
+</div>
+
+<!-- VIEW 2: CRM -->
+<div class="view" id="view-crm">
+<div style="margin-top:16px">
+  <div class="crm-header">
+    <div><div class="crm-title">EXPANSION SCOREBOARD</div><div class="crm-sub">Pipeline · Scorecard · Kill-Switch · TTM · Regulatory</div></div>
+    <div><div style="font-size:11px;color:var(--muted);text-align:right" id="ts"></div><div class="market-badges" id="market-badges"></div></div>
+  </div>
+  <div class="kill-panel" id="kill-panel"><div class="section-label">⚠ Kill-Switch Aktiverade</div><div class="kill-list" id="kill-list"></div></div>
+  <div class="section"><div class="section-label">Pipeline — 5 Steg</div><div class="pipeline-grid" id="pipeline-grid"></div></div>
+  <div class="section"><div class="section-label">Go / No-Go Scorecard</div><div class="score-table-wrap"><table class="score-table"><thead><tr><th>Kandidat</th><th>Marknad</th><th>Demografi</th><th>Grannar</th><th>Tillgänglighet</th><th>Ekonomi</th><th>Logistik</th><th>Synlighet</th><th>Butikslokal</th><th>Poäng</th><th>Verdict</th></tr></thead><tbody id="score-tbody"></tbody></table></div></div>
+  <div class="section"><div class="section-label">TTM Tracker — Mål: ≤84 Dagar</div><div class="ttm-grid" id="ttm-grid"></div></div>
+  <div class="section"><div class="section-label">Regulatorisk Status per Marknad</div><div class="reg-grid" id="reg-grid"></div></div>
+  <div class="section">
+    <div class="section-label">⊕ Lägg till marknad</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+      <div style="display:flex;flex-direction:column;gap:4px"><label style="font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted)">Flagga (emoji)</label><input class="form-input" id="new-mkt-flag" type="text" placeholder="🏳" style="width:70px;text-align:center;font-size:18px"></div>
+      <div style="display:flex;flex-direction:column;gap:4px"><label style="font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted)">Landskod *</label><input class="form-input" id="new-mkt-code" type="text" placeholder="t.ex. AT" style="width:80px;text-transform:uppercase" maxlength="3"></div>
+      <div style="display:flex;flex-direction:column;gap:4px"><label style="font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted)">Landsnamn *</label><input class="form-input" id="new-mkt-name" type="text" placeholder="t.ex. Österrike" style="width:180px"></div>
+      <button onclick="addMarket()" style="background:var(--surface2);border:1px solid var(--amber-dim);color:var(--amber);font-family:var(--mono);font-size:11px;letter-spacing:0.1em;text-transform:uppercase;padding:7px 16px;border-radius:3px;cursor:pointer;white-space:nowrap">⊕ Lägg till</button>
+    </div>
+    <div style="margin-top:8px;font-size:10px;color:var(--muted)">Aktiva marknader: <span id="active-markets-list"></span></div>
+  </div>
+  <div class="footer"><span>LAGER 157 EXPANSION CRM</span><span id="crm-footer-status">Ansluter…</span></div>
+</div>
+</div>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModal(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div><div class="modal-title" id="modal-title"></div><div style="font-size:10px;color:var(--muted);margin-top:3px" id="modal-sub"></div></div>
+      <button class="modal-close" onclick="closeModal()">✕ STÄNG</button>
+    </div>
+    <div id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let CANDIDATES = [];
+let MARKETS = [];
+let CRITERIA = [];
+const STAGES = ['Gate 1','Gate 2','Gate 3','Gate 4','Gate 5'];
+const KILL_LABELS = [
+  'Business case: medför efter förhandling för hög risk i förhållande till reward',
+  'Konkurrensklausuler: hindrar för oss kritiska delar i vårt koncept',
+  'Tidsplan: är inte i linje med våra strategier och processer',
+];
+let scores = {};
+
+// ============================================================
+// SYNC INDICATOR
+// ============================================================
+function setSyncStatus(state) {
+  const dot = document.getElementById('sync-dot');
+  dot.className = 'sync-dot' + (state === 'syncing' ? ' syncing' : state === 'error' ? ' error' : '');
+  dot.title = state === 'ok' ? 'Synkad' : state === 'syncing' ? 'Synkar…' : 'Anslutningsfel';
+  const status = state === 'ok' ? 'Synkad' : state === 'syncing' ? 'Synkar…' : '⚠ Offline';
+  const ts = new Date().toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('sc-footer-status').textContent = state === 'ok' ? `Synkad ${ts}` : status;
+  if (document.getElementById('crm-footer-status'))
+    document.getElementById('crm-footer-status').textContent = state === 'ok' ? `Synkad ${ts}` : status;
+}
+
+// ============================================================
+// API HELPERS
+// ============================================================
+async function api(method, path, body) {
+  setSyncStatus('syncing');
+  try {
+    const r = await fetch('/api' + path, {
+      method,
+      headers: body ? {'Content-Type':'application/json'} : {},
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!r.ok) throw new Error(r.status);
+    setSyncStatus('ok');
+    return r.json();
+  } catch(e) {
+    setSyncStatus('error');
+    throw e;
+  }
+}
+
+// ============================================================
+// INIT — load all data from server
+// ============================================================
+async function init() {
+  try {
+    const [cands, markets, criteria] = await Promise.all([
+      api('GET','/candidates'),
+      api('GET','/markets'),
+      api('GET','/criteria'),
+    ]);
+    CANDIDATES = cands;
+    MARKETS = markets;
+    CRITERIA = criteria.map(c => ({
+      key: c.key, name: c.name, weight: c.weight,
+      desc: c.descr, rationale: c.rationale,
+    }));
+    scores = {};
+    CRITERIA.forEach(c => scores[c.key] = 0);
+    buildCriteriaUI();
+    buildMarketSelect();
+    buildMarketBadges();
+    updateVerdict();
+    renderCRM();
+    document.getElementById('crm-count').textContent = CANDIDATES.length;
+    setSyncStatus('ok');
+  } catch(e) {
+    setSyncStatus('error');
+    console.error('Init failed', e);
+  }
+}
+
+// Poll for updates every 15 seconds so teammates' changes appear
+setInterval(async () => {
+  try {
+    const cands = await api('GET','/candidates');
+    CANDIDATES = cands;
+    renderCRM();
+    document.getElementById('crm-count').textContent = CANDIDATES.length;
+  } catch(e) {}
+}, 15000);
+
+// ============================================================
+// HELPERS
+// ============================================================
+function mFlag(m){ const mk = MARKETS.find(x=>x.code===m); return mk ? mk.flag : ''; }
+function daysBetween(a,b){ return Math.round((new Date(b)-new Date(a))/86400000); }
+function daysLeft(t){ return Math.round((new Date(t)-new Date())/86400000); }
+
+function calcWeightedScore(s) {
+  let earned=0, max=0;
+  CRITERIA.forEach(c=>{ const sc=s[c.key]||0; earned+=sc*c.weight; max+=5*c.weight; });
+  return { earned, max, pct: max ? Math.round(earned/max*100) : 0 };
+}
+function verdictFromPct(pct, hasKill) {
+  if (hasKill) return 'KILL';
+  if (pct>=80) return 'GO';
+  if (pct>=55) return 'FLAGGA';
+  return 'NO-GO';
+}
+function verdictColor(v){ return v==='GO'?'var(--green)':v==='FLAGGA'?'var(--yellow)':'var(--red)'; }
+function barColorPct(pct){ return pct>=80?'var(--green)':pct>=55?'var(--yellow)':'var(--red)'; }
+function barColorScore(s){ return s>=4?'var(--green)':s>=3?'var(--yellow)':'var(--red)'; }
+
+// ============================================================
+// TAB
+// ============================================================
+function switchTab(tab, btn) {
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('view-'+tab).classList.add('active');
+  btn.classList.add('active');
+  if (tab==='crm') renderCRM();
+}
+
+// ============================================================
+// SCORECARD UI
+// ============================================================
+function buildCriteriaUI() {
+  document.getElementById('criteria-container').innerHTML = CRITERIA.map((c,ci)=>`
+    <div class="crit-block" id="crit-block-${ci}">
+      <div class="crit-top">
+        <div class="crit-info">
+          <div class="crit-name-row">
+            <span class="crit-name" contenteditable="true" id="crit-name-${ci}" onblur="renameCrit(${ci},this.textContent)">${c.name}</span>
+            <span class="weight-badge">vikt <input class="weight-input" type="number" id="crit-w-${ci}" value="${c.weight}" min="1" max="10" onchange="updateWeight(${ci},this.value)"></span>
+          </div>
+          <div class="crit-desc">${c.desc}</div>
+          <div class="crit-rationale">${c.rationale}</div>
+        </div>
+        <div class="score-btns" id="btns-${ci}">
+          ${[1,2,3,4,5].map(n=>`<button class="score-btn" id="sb-${ci}-${n}" onclick="setScore('${c.key}',${n},${ci})">${n}</button>`).join('')}
+        </div>
+      </div>
+      <div class="crit-result">
+        <span class="crit-result-label">Viktat bidrag</span>
+        <span class="crit-result-val" id="crit-contrib-${ci}">— / ${c.weight*5} p</span>
+      </div>
+    </div>`).join('');
+}
+
+function buildMarketSelect() {
+  const sel = document.getElementById('sc-market');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Välj marknad…</option>' +
+    MARKETS.map(mk=>`<option value="${mk.code}">${mk.flag} ${mk.code} — ${mk.name}</option>`).join('');
+  sel.value = cur;
+}
+
+function buildMarketBadges() {
+  document.getElementById('market-badges').innerHTML =
+    MARKETS.map(mk=>`<span class="badge">${mk.flag} ${mk.code}</span>`).join('');
+}
+
+function setScore(key, val, ci) {
+  scores[key] = val;
+  [1,2,3,4,5].forEach(n=>{
+    document.getElementById(`sb-${ci}-${n}`).className = 'score-btn'+(n<=val?` active-${val}`:'');
+  });
+  const crit = CRITERIA[ci];
+  document.getElementById(`crit-contrib-${ci}`).textContent = `${val*crit.weight} / ${5*crit.weight} p`;
+  updateVerdict();
+}
+
+function updateWeight(ci, val) {
+  val = Math.max(1,Math.min(10,parseInt(val)||1));
+  CRITERIA[ci].weight = val;
+  document.getElementById(`crit-w-${ci}`).value = val;
+  const sc = scores[CRITERIA[ci].key]||0;
+  document.getElementById(`crit-contrib-${ci}`).textContent = sc ? `${sc*val} / ${val*5} p` : `— / ${val*5} p`;
+  // persist to server
+  api('PATCH',`/criteria/${CRITERIA[ci].key}`, {name:CRITERIA[ci].name, weight:val}).catch(()=>{});
+  updateVerdict();
+}
+
+function renameCrit(ci, name) {
+  CRITERIA[ci].name = name.trim()||CRITERIA[ci].name;
+  api('PATCH',`/criteria/${CRITERIA[ci].key}`, {name:CRITERIA[ci].name, weight:CRITERIA[ci].weight}).catch(()=>{});
+}
+
+function toggleKill(i) {
+  const el = document.getElementById(`kc-${i}`);
+  if (document.getElementById(`ks-${i}`).checked) el.classList.add('triggered');
+  else el.classList.remove('triggered');
+  updateVerdict();
+}
+
+function getActiveKills() {
+  return KILL_LABELS.filter((_,i)=>document.getElementById(`ks-${i}`).checked);
+}
+
+function updateVerdict() {
+  const hasUnscored = CRITERIA.some(c=>!scores[c.key]);
+  const kills = getActiveKills();
+  const hasKill = kills.length>0;
+  const {earned,max,pct} = calcWeightedScore(scores);
+  const v = hasUnscored&&!hasKill ? null : verdictFromPct(pct,hasKill);
+  const box=document.getElementById('verdict-box');
+  const label=document.getElementById('verdict-label');
+  const pctEl=document.getElementById('verdict-pct');
+  const fill=document.getElementById('verdict-fill');
+  const desc=document.getElementById('verdict-desc');
+  const btn=document.getElementById('btn-submit');
+  document.getElementById('verdict-pts-text').textContent=`${earned} poäng uppnådda`;
+  document.getElementById('verdict-max-text').textContent=`av ${max} möjliga`;
+  if (!v) {
+    box.className='verdict-box'; label.className='verdict-label'; label.textContent='—';
+    pctEl.className='verdict-pct'; pctEl.textContent='—'; fill.style.width='0%';
+    fill.style.background='var(--border)'; desc.textContent='Poängsätt alla kriterier för att se resultatet';
+    btn.disabled=true; btn.textContent='✓ Skapa lead i CRM (Gate 1)'; return;
+  }
+  const cls=v==='GO'?'go':v==='FLAGGA'?'flag':'nogo';
+  box.className='verdict-box '+(hasKill?'kill':cls);
+  label.className='verdict-label '+(hasKill?'kill':cls);
+  pctEl.className='verdict-pct '+(hasKill?'kill':cls);
+  if (hasKill) {
+    label.textContent='⚡ KILL-SWITCH — NO-GO'; pctEl.textContent=pct+'%';
+    desc.textContent=kills.join(' · '); fill.style.background='var(--red)';
+    btn.disabled=true; btn.textContent='✕ Kan inte skapa lead (Kill-Switch aktiv)';
+  } else if (v==='GO') {
+    label.textContent='✓ GO'; pctEl.textContent=pct+'%';
+    desc.textContent='Kandidaten klarar Gate 1 — redo att skickas till CRM-pipeline';
+    fill.style.background='var(--green)'; btn.disabled=false; btn.textContent='✓ Skapa lead i CRM (Gate 1)';
+  } else if (v==='FLAGGA') {
+    label.textContent='⚑ FLAGGA'; pctEl.textContent=pct+'%';
+    desc.textContent='Kandidaten har svagheter — granska noggrant'; fill.style.background='var(--yellow)';
+    btn.disabled=false; btn.textContent='⚑ Skapa flaggad lead i CRM (Gate 1)';
+  } else {
+    label.textContent='✕ NO-GO'; pctEl.textContent=pct+'%';
+    desc.textContent='Poängen är för låg — under 55 % av max'; fill.style.background='var(--red)';
+    btn.disabled=true; btn.textContent='✕ Kan inte skapa lead (NO-GO)';
+  }
+  fill.style.width=pct+'%';
+}
+
+async function submitGate1() {
+  const kills=getActiveKills();
+  if (kills.length>0){alert('⚡ Kill-Switch aktiv — caset kan inte skickas till CRM.');return;}
+  const {pct}=calcWeightedScore(scores);
+  if (pct<55){alert('✕ NO-GO — under 55 % av max.');return;}
+  const city=document.getElementById('sc-city').value.trim();
+  const market=document.getElementById('sc-market').value;
+  if (!city||!market){alert('Ange minst stad och marknad.');return;}
+  const id=city.toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9-]/g,'')+'-'+Date.now();
+  const v=verdictFromPct(pct,false);
+  const noteStr=[document.getElementById('sc-property').value.trim()?'Fastighet: '+document.getElementById('sc-property').value.trim():'',document.getElementById('sc-notes').value.trim()].filter(Boolean).join(' · ');
+  const candidate={
+    id, city, market,
+    size_sqm:parseFloat(document.getElementById('sc-sqm').value)||0,
+    stage:1, days_in_stage:0,
+    rent_eur_sqm:parseFloat(document.getElementById('sc-rent').value)||0,
+    scores:{...scores},
+    kill_switches:kills.map(l=>({trigger:l,reason:''})),
+    notes:noteStr,
+    owner:document.getElementById('sc-owner').value.trim(),
+    ttm:null,
+    regulatory:{[market.toLowerCase()]:'Ej påbörjad screening.'},
+  };
+  try {
+    await api('POST','/candidates',candidate);
+    CANDIDATES.push(candidate);
+    document.getElementById('crm-count').textContent=CANDIDATES.length;
+    const banner=document.getElementById('success-banner');
+    document.getElementById('success-title').textContent=`✓ ${mFlag(market)} ${city} tillagd i CRM — Gate 1`;
+    document.getElementById('success-sub').textContent=`Verdict: ${v} · ${pct}% av maxpoäng · Gå till CRM-fliken.`;
+    banner.classList.add('show');
+    banner.scrollIntoView({behavior:'smooth',block:'nearest'});
+    resetForm(true);
+  } catch(e){alert('Kunde inte spara — kontrollera anslutningen.');}
+}
+
+function resetForm(keepBanner) {
+  document.getElementById('sc-city').value='';
+  document.getElementById('sc-market').value='';
+  document.getElementById('sc-sqm').value='';
+  document.getElementById('sc-rent').value='';
+  document.getElementById('sc-property').value='';
+  document.getElementById('sc-owner').value='';
+  document.getElementById('sc-notes').value='';
+  CRITERIA.forEach((c,ci)=>{
+    scores[c.key]=0;
+    [1,2,3,4,5].forEach(n=>{document.getElementById(`sb-${ci}-${n}`).className='score-btn';});
+    document.getElementById(`crit-contrib-${ci}`).textContent=`— / ${c.weight*5} p`;
+  });
+  [0,1,2].forEach(i=>{document.getElementById(`ks-${i}`).checked=false;document.getElementById(`kc-${i}`).classList.remove('triggered');});
+  if(!keepBanner)document.getElementById('success-banner').classList.remove('show');
+  updateVerdict();
+}
+
+// ============================================================
+// CRM RENDER
+// ============================================================
+function renderCRM() {
+  const now=new Date();
+  document.getElementById('ts').textContent=now.toLocaleDateString('sv-SE')+' · '+now.toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'});
+  buildMarketBadges();
+  renderKillPanel(); renderPipeline(); renderScoreTable(); renderTTM(); renderReg();
+  const aml=document.getElementById('active-markets-list');
+  if(aml)aml.textContent=MARKETS.map(m=>m.flag+' '+m.code).join('  ·  ');
+}
+
+function renderKillPanel(){
+  const kills=CANDIDATES.filter(c=>c.kill_switches&&c.kill_switches.length>0);
+  const panel=document.getElementById('kill-panel');
+  const list=document.getElementById('kill-list');
+  if(!kills.length){panel.style.display='none';return;}
+  panel.style.display='';
+  list.innerHTML=kills.flatMap(c=>c.kill_switches.map(ks=>`
+    <div class="kill-item"><div class="kill-dot"></div>
+    <span class="kill-city">${mFlag(c.market)} ${c.city}</span>
+    <span class="kill-reason"><strong>${ks.trigger}</strong>${ks.reason?' — '+ks.reason:''}</span></div>`)).join('');
+}
+
+function renderPipeline(){
+  document.getElementById('pipeline-grid').innerHTML=STAGES.map((stage,i)=>{
+    const cards=CANDIDATES.filter(c=>c.stage===i+1);
+    return `<div class="pipeline-col">
+      <div class="pipeline-col-header"><span>${stage}</span><span class="pipeline-col-count">${cards.length}</span></div>
+      <div class="pipeline-cards">
+        ${cards.length===0?`<div style="color:var(--border);font-size:10px;padding:6px 0">—</div>`:cards.map(c=>{
+          const {pct}=calcWeightedScore(c.scores);
+          const hasKill=c.kill_switches.length>0;
+          const v=verdictFromPct(pct,hasKill);
+          const sc=v==='GO'?'status-go':v==='FLAGGA'?'status-flag':'status-nogo';
+          const pc=v==='GO'?'pill-go':v==='FLAGGA'?'pill-flag':'pill-nogo';
+          return `<div class="card ${sc}" onclick="openModal('${c.id}')">
+            <span class="status-pill ${pc}">${hasKill?'KILL':v}</span>
+            <div class="card-city">${mFlag(c.market)} ${c.city}</div>
+            <div class="card-meta">${c.size_sqm||'—'} kvm · ${c.rent_eur_sqm||'—'} €/kvm${c.owner?' · '+c.owner:''}</div>
+            <div class="card-days">↳ ${c.days_in_stage}d i steget · ${pct}%</div>
+            ${i===4&&c.est_open?`<div style="font-size:10px;color:var(--green);margin-top:3px">🗓 Öppnar: ${c.est_open}</div>`:''}
+          </div>`;}).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderScoreTable(){
+  const ckeys=['demografi','grannar','tillganglighet','ekonomi','logistik','synlighet','butikslokal'];
+  document.getElementById('score-tbody').innerHTML=CANDIDATES.map(c=>{
+    const {earned,max,pct}=calcWeightedScore(c.scores);
+    const hasKill=c.kill_switches.length>0;
+    const v=verdictFromPct(pct,hasKill);
+    const vc=v==='GO'?'verdict-go':v==='FLAGGA'?'verdict-flag':'verdict-nogo';
+    return `<tr style="cursor:pointer" onclick="openModal('${c.id}')">
+      <td style="font-weight:bold">${mFlag(c.market)} ${c.city}</td>
+      <td style="color:var(--muted)">${c.market}</td>
+      ${ckeys.map(k=>{const val=c.scores[k]||0;return`<td><div class="score-bar"><div class="bar-track"><div class="bar-fill" style="width:${val/5*100}%;background:${barColorScore(val)}"></div></div><span class="score-num">${val}/5</span></div></td>`;}).join('')}
+      <td><div class="score-bar"><div class="bar-track" style="width:80px"><div class="bar-fill" style="width:${pct}%;background:${barColorPct(pct)}"></div></div><span class="score-num">${pct}%</span></div></td>
+      <td class="${vc}">${hasKill?'⚡ KILL':v}</td>
+    </tr>`;}).join('');
+}
+
+function renderTTM(){
+  const grid=document.getElementById('ttm-grid');
+  const contracted=CANDIDATES.filter(c=>c.stage>=4&&c.ttm);
+  if(!contracted.length){grid.innerHTML=`<div style="color:var(--muted);font-size:11px">Inga kontrakterade butiker ännu.</div>`;return;}
+  grid.innerHTML=contracted.map(c=>{
+    const ttm=c.ttm;
+    const totalD=daysBetween(ttm.contract_date,ttm.target_open);
+    const elapsed=daysBetween(ttm.contract_date,new Date().toISOString().slice(0,10));
+    const left=daysLeft(ttm.target_open);
+    const pct=Math.min(100,Math.round(elapsed/totalD*100));
+    const cc=left>28?'ttm-green':left>14?'ttm-yellow':'ttm-red';
+    const bc=left>28?'var(--green)':left>14?'var(--yellow)':'var(--red)';
+    return `<div class="ttm-card">
+      <div class="ttm-header"><div><div class="ttm-city">${mFlag(c.market)} ${c.city}</div><div class="ttm-market">${c.market} · ${c.size_sqm} kvm</div></div>
+      <div style="text-align:right"><div class="ttm-days-left ${cc}">${left>0?left:'PASSERAT'}</div><div class="ttm-days-label">DAGAR KVAR</div></div></div>
+      <div class="ttm-progress"><div class="ttm-progress-fill" style="width:${pct}%;background:${bc}"></div></div>
+      <div class="milestones">${ttm.milestones.map(ms=>`<div class="milestone"><div class="ms-dot ${ms.done?'ms-done':ms.active?'ms-active':'ms-pending'}"></div><span class="ms-label">${ms.label}</span><span class="ms-date">${ms.date}</span></div>`).join('')}</div>
+    </div>`;}).join('');
+}
+
+function renderReg(){
+  const REG={DE:[{icon:'⚖',label:'LEP / Landesentwicklungsplan',desc:'Screening mot regional plan'},{icon:'🏙',label:'Zentrenkonzept',desc:'B-läge kompatibelt?'},{icon:'🔖',label:'Branchierung',desc:'Mode som perifert sortiment?'}],NL:[{icon:'📋',label:'Bestämmingsplan',desc:'Steg 1 i all NL due diligence'},{icon:'🏬',label:'PDV/GDV-lagen',desc:'Perifert modehandel = sällsynt'},{icon:'📍',label:'Branchering',desc:'Kategoriklassificering'}],NO:[{icon:'🗺',label:'Regional planbestemmelse',desc:'Trøndelag + regioner'},{icon:'🛍',label:'Kjøpesenter-restriksjon',desc:'Ev. kommunala begränsningar'}],SE:[{icon:'📋',label:'Detaljplan',desc:'Kommunal planprövning'},{icon:'🏬',label:'Handelsutredning',desc:'Ev. krav vid extern handel'}],FI:[{icon:'📋',label:'Asemakaava',desc:'Detaljplangranskning'},{icon:'🔖',label:'Kaupan sijainnin ohjaus',desc:'Reglering av handelslokalisering'}],DK:[{icon:'📋',label:'Lokalplan',desc:'Kommunal planprövning'},{icon:'🏬',label:'Detailhandelsplan',desc:'Regionala handelsbestämmelser'}]};
+  const active=MARKETS.filter(mk=>CANDIDATES.some(c=>c.market===mk.code));
+  if(!active.length){document.getElementById('reg-grid').innerHTML=`<div style="color:var(--muted);font-size:11px">Inga marknader med kandidater ännu.</div>`;return;}
+  document.getElementById('reg-grid').innerHTML=active.map(mk=>{
+    const items=REG[mk.code]||[{icon:'📋',label:'Lokal planlagstiftning',desc:'Screening krävs'}];
+    const cands=CANDIDATES.filter(c=>c.market===mk.code);
+    return `<div class="reg-card"><div class="reg-market">${mk.flag} ${mk.name.toUpperCase()}</div>
+      ${items.map(item=>`<div class="reg-item"><span class="reg-icon">${item.icon}</span><div class="reg-text"><strong>${item.label}</strong><span>${item.desc}</span></div></div>`).join('')}
+      <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);font-size:10px;color:var(--muted)">${cands.length} kandidater</div>
+    </div>`;}).join('');
+}
+
+async function addMarket(){
+  const code=document.getElementById('new-mkt-code').value.trim().toUpperCase().slice(0,3);
+  const name=document.getElementById('new-mkt-name').value.trim();
+  const flag=document.getElementById('new-mkt-flag').value.trim();
+  if(!code||!name){alert('Ange minst landskod och namn.');return;}
+  if(MARKETS.find(m=>m.code===code)){alert('Marknaden finns redan.');return;}
+  await api('POST','/markets',{code,flag:flag||'🏳',name});
+  MARKETS.push({code,flag:flag||'🏳',name});
+  buildMarketSelect(); buildMarketBadges();
+  document.getElementById('new-mkt-code').value='';
+  document.getElementById('new-mkt-name').value='';
+  document.getElementById('new-mkt-flag').value='';
+  renderCRM();
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function openModal(id){
+  const c=CANDIDATES.find(x=>x.id===id); if(!c) return;
+  const {earned,max,pct}=calcWeightedScore(c.scores);
+  const hasKill=c.kill_switches.length>0;
+  const v=verdictFromPct(pct,hasKill);
+  const vColor=verdictColor(v);
+  document.getElementById('modal-title').textContent=`${mFlag(c.market)} ${c.city}`;
+  document.getElementById('modal-sub').textContent=`${c.market} · ${c.size_sqm||'—'} kvm · ${STAGES[c.stage-1]}${c.owner?' · '+c.owner:''}`;
+  document.getElementById('modal-body').innerHTML=`
+    <div class="modal-section">
+      <div class="modal-section-title">Verdict</div>
+      <div style="font-size:20px;font-weight:bold;color:${vColor};margin-bottom:6px">${hasKill?'⚡ KILL-SWITCH: NO-GO':v} <span style="font-size:12px;color:var(--muted)">${pct}% av max · ${earned}/${max} p</span></div>
+      ${hasKill?c.kill_switches.map(ks=>`<div style="background:rgba(239,68,68,0.1);border:1px solid var(--red);border-radius:3px;padding:8px;font-size:11px;color:#fca5a5;margin-bottom:4px"><strong>${ks.trigger}</strong>${ks.reason?'<br>'+ks.reason:''}</div>`).join(''):''}
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">Scorecard (viktad)</div>
+      ${CRITERIA.map(cr=>{const val=c.scores[cr.key]||0;return`<div class="modal-row"><span class="modal-key">${cr.name} <span style="color:var(--border)">×${cr.weight}</span></span><span class="modal-val" style="color:${barColorScore(val)}">${val}/5 <span style="color:var(--muted);font-weight:normal;font-size:10px">(${val*cr.weight}/${5*cr.weight}p)</span></span></div>`;}).join('')}
+    </div>
+    <div class="modal-section">
+      <div class="modal-section-title">Info</div>
+      <div class="modal-row"><span class="modal-key">Hyra</span><span class="modal-val">${c.rent_eur_sqm||'—'} EUR/kvm</span></div>
+      <div class="modal-row"><span class="modal-key">Yta</span><span class="modal-val">${c.size_sqm||'—'} kvm</span></div>
+      <div class="modal-row"><span class="modal-key">Steg</span><span class="modal-val">${STAGES[c.stage-1]}</span></div>
+      <div class="modal-row"><span class="modal-key">Dagar i steget</span><span class="modal-val">${c.days_in_stage}d</span></div>
+      ${c.owner?`<div class="modal-row"><span class="modal-key">Ansvarig person</span><span class="modal-val">${c.owner}</span></div>`:''}
+      <div class="modal-row"><span class="modal-key">Est. öppningsdatum</span><span class="modal-val"><input type="date" value="${c.est_open||''}" onchange="setEstOpen('${c.id}',this.value)" style="background:var(--bg);border:1px solid var(--border);border-radius:3px;color:var(--text);font-family:Arial,sans-serif;font-size:11px;padding:3px 6px;"></span></div>
+    </div>
+    <div class="modal-section"><div class="modal-section-title">Anteckningar</div><div style="font-size:11px;color:var(--muted);line-height:1.6">${c.notes||'—'}</div></div>
+    <div class="modal-section"><div class="modal-section-title">Regulatorisk Status</div><div style="font-size:11px;color:var(--muted);line-height:1.6">${Object.values(c.regulatory).filter(Boolean).join(' | ')||'Ingen info'}</div></div>
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px;display:flex;justify-content:flex-end">
+      <button onclick="deleteCandidate('${c.id}')" style="background:rgba(239,68,68,0.08);border:1px solid var(--red);color:var(--red);font-family:Arial,sans-serif;font-size:11px;padding:6px 14px;border-radius:3px;cursor:pointer">✕ Ta bort case</button>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:4px">
+      <div style="font-size:9px;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Flytta till gate</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${STAGES.map((s,i)=>{const cur=c.stage===i+1;return`<button onclick="moveStage('${c.id}',${i+1})" style="flex:1;min-width:80px;padding:8px 4px;border-radius:3px;font-family:Arial,sans-serif;font-size:11px;cursor:pointer;border:1px solid ${cur?'var(--green)':'var(--border)'};background:${cur?'var(--green-dim)':'var(--surface2)'};color:${cur?'var(--green)':'var(--muted)'};font-weight:${cur?'bold':'normal'}">${cur?'✓ ':''}${s}</button>`;}).join('')}
+      </div>
+    </div>`;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+async function moveStage(id, newStage){
+  const c=CANDIDATES.find(x=>x.id===id); if(!c) return;
+  c.stage=newStage; c.days_in_stage=0;
+  await api('PATCH',`/candidates/${id}`,{stage:newStage,days_in_stage:0}).catch(()=>{});
+  document.getElementById('modal-overlay').classList.remove('open');
+  renderCRM();
+  setTimeout(()=>openModal(id),60);
+}
+
+async function setEstOpen(id, val){
+  const c=CANDIDATES.find(x=>x.id===id); if(!c) return;
+  c.est_open=val;
+  await api('PATCH',`/candidates/${id}`,{est_open:val}).catch(()=>{});
+  renderCRM();
+}
+
+async function deleteCandidate(id){
+  const c=CANDIDATES.find(x=>x.id===id); if(!c) return;
+  if(!confirm(`Ta bort "${c.city}" från pipeline? Detta går inte att ångra.`)) return;
+  await api('DELETE',`/candidates/${id}`);
+  CANDIDATES.splice(CANDIDATES.findIndex(x=>x.id===id),1);
+  document.getElementById('modal-overlay').classList.remove('open');
+  document.getElementById('crm-count').textContent=CANDIDATES.length;
+  renderCRM();
+}
+
+function closeModal(e){
+  if(!e||e.target.id==='modal-overlay'||e.currentTarget.tagName==='BUTTON')
+    document.getElementById('modal-overlay').classList.remove('open');
+}
+
+// ============================================================
+// START
+// ============================================================
+init();
+</script>
+</body>
+</html>
