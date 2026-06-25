@@ -71,28 +71,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13
 .verdict-go{color:var(--green);font-weight:bold;}
 .verdict-flag{color:var(--yellow);font-weight:bold;}
 .verdict-nogo{color:var(--red);font-weight:bold;}
-.ttm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;}
-.ttm-card{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:12px;}
-.ttm-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
-.ttm-city{font-size:13px;font-weight:bold;color:var(--text);}
-.ttm-market{font-size:10px;color:var(--muted);margin-top:1px;}
-.ttm-days-left{font-size:20px;font-weight:bold;line-height:1;}
-.ttm-days-label{font-size:9px;color:var(--muted);letter-spacing:0.1em;}
-.ttm-green{color:var(--green);}.ttm-yellow{color:var(--yellow);}.ttm-red{color:var(--red);}
-.ttm-progress{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:10px;}
-.ttm-progress-fill{height:100%;border-radius:2px;}
-.milestones{display:flex;flex-direction:column;gap:5px;}
-.milestone{display:flex;align-items:center;gap:8px;font-size:10px;}
-.ms-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-.ms-done{background:var(--green);}.ms-active{background:var(--amber);}.ms-pending{background:var(--border);}
-.ms-label{color:var(--muted);flex:1;}.ms-date{color:var(--muted);font-size:9px;}
-.reg-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;}
-.reg-card{background:var(--surface);border:1px solid var(--border);border-radius:4px;padding:12px;}
-.reg-market{font-size:11px;font-weight:bold;color:var(--amber);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);}
-.reg-item{display:flex;align-items:flex-start;gap:8px;margin-bottom:7px;font-size:11px;}
-.reg-icon{flex-shrink:0;margin-top:1px;}
-.reg-text{color:var(--text);}
-.reg-text span{color:var(--muted);font-size:10px;display:block;}
+
+
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:200;align-items:center;justify-content:center;padding:16px;}
 .modal-overlay.open{display:flex;}
 .modal{background:var(--surface);border:1px solid var(--amber-dim);border-radius:6px;width:100%;max-width:580px;max-height:90vh;overflow-y:auto;padding:20px;}
@@ -255,8 +235,8 @@ body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13
   <div class="kill-panel" id="kill-panel"><div class="section-label">⚠ Kill-Switch Aktiverade</div><div class="kill-list" id="kill-list"></div></div>
   <div class="section"><div class="section-label">Pipeline — 5 Steg</div><div class="pipeline-grid" id="pipeline-grid"></div></div>
   <div class="section"><div class="section-label">Go / No-Go Scorecard</div><div class="score-table-wrap"><table class="score-table"><thead><tr><th>Kandidat</th><th>Marknad</th><th>Demografi</th><th>Grannar</th><th>Tillgänglighet</th><th>Ekonomi</th><th>Logistik</th><th>Synlighet</th><th>Butikslokal</th><th>Poäng</th><th>Verdict</th></tr></thead><tbody id="score-tbody"></tbody></table></div></div>
-  <div class="section"><div class="section-label">TTM Tracker — Mål: ≤84 Dagar</div><div class="ttm-grid" id="ttm-grid"></div></div>
-  <div class="section"><div class="section-label">Regulatorisk Status per Marknad</div><div class="reg-grid" id="reg-grid"></div></div>
+
+
   <div class="section">
     <div class="section-label">⊕ Lägg till marknad</div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
@@ -586,7 +566,7 @@ function renderCRM() {
   const now=new Date();
   document.getElementById('ts').textContent=now.toLocaleDateString('sv-SE')+' · '+now.toLocaleTimeString('sv-SE',{hour:'2-digit',minute:'2-digit'});
   buildMarketBadges();
-  renderKillPanel(); renderPipeline(); renderScoreTable(); renderTTM(); renderReg();
+  renderKillPanel(); renderPipeline(); renderScoreTable();
   const aml=document.getElementById('active-markets-list');
   if(aml)aml.textContent=MARKETS.map(m=>m.flag+' '+m.code).join('  ·  ');
 }
@@ -643,38 +623,9 @@ function renderScoreTable(){
     </tr>`;}).join('');
 }
 
-function renderTTM(){
-  const grid=document.getElementById('ttm-grid');
-  const contracted=CANDIDATES.filter(c=>c.stage>=4&&c.ttm);
-  if(!contracted.length){grid.innerHTML=`<div style="color:var(--muted);font-size:11px">Inga kontrakterade butiker ännu.</div>`;return;}
-  grid.innerHTML=contracted.map(c=>{
-    const ttm=c.ttm;
-    const totalD=daysBetween(ttm.contract_date,ttm.target_open);
-    const elapsed=daysBetween(ttm.contract_date,new Date().toISOString().slice(0,10));
-    const left=daysLeft(ttm.target_open);
-    const pct=Math.min(100,Math.round(elapsed/totalD*100));
-    const cc=left>28?'ttm-green':left>14?'ttm-yellow':'ttm-red';
-    const bc=left>28?'var(--green)':left>14?'var(--yellow)':'var(--red)';
-    return `<div class="ttm-card">
-      <div class="ttm-header"><div><div class="ttm-city">${mFlag(c.market)} ${c.city}</div><div class="ttm-market">${c.market} · ${c.size_sqm} kvm</div></div>
-      <div style="text-align:right"><div class="ttm-days-left ${cc}">${left>0?left:'PASSERAT'}</div><div class="ttm-days-label">DAGAR KVAR</div></div></div>
-      <div class="ttm-progress"><div class="ttm-progress-fill" style="width:${pct}%;background:${bc}"></div></div>
-      <div class="milestones">${ttm.milestones.map(ms=>`<div class="milestone"><div class="ms-dot ${ms.done?'ms-done':ms.active?'ms-active':'ms-pending'}"></div><span class="ms-label">${ms.label}</span><span class="ms-date">${ms.date}</span></div>`).join('')}</div>
-    </div>`;}).join('');
-}
 
-function renderReg(){
-  const REG={DE:[{icon:'⚖',label:'LEP / Landesentwicklungsplan',desc:'Screening mot regional plan'},{icon:'🏙',label:'Zentrenkonzept',desc:'B-läge kompatibelt?'},{icon:'🔖',label:'Branchierung',desc:'Mode som perifert sortiment?'}],NL:[{icon:'📋',label:'Bestämmingsplan',desc:'Steg 1 i all NL due diligence'},{icon:'🏬',label:'PDV/GDV-lagen',desc:'Perifert modehandel = sällsynt'},{icon:'📍',label:'Branchering',desc:'Kategoriklassificering'}],NO:[{icon:'🗺',label:'Regional planbestemmelse',desc:'Trøndelag + regioner'},{icon:'🛍',label:'Kjøpesenter-restriksjon',desc:'Ev. kommunala begränsningar'}],SE:[{icon:'📋',label:'Detaljplan',desc:'Kommunal planprövning'},{icon:'🏬',label:'Handelsutredning',desc:'Ev. krav vid extern handel'}],FI:[{icon:'📋',label:'Asemakaava',desc:'Detaljplangranskning'},{icon:'🔖',label:'Kaupan sijainnin ohjaus',desc:'Reglering av handelslokalisering'}],DK:[{icon:'📋',label:'Lokalplan',desc:'Kommunal planprövning'},{icon:'🏬',label:'Detailhandelsplan',desc:'Regionala handelsbestämmelser'}]};
-  const active=MARKETS.filter(mk=>CANDIDATES.some(c=>c.market===mk.code));
-  if(!active.length){document.getElementById('reg-grid').innerHTML=`<div style="color:var(--muted);font-size:11px">Inga marknader med kandidater ännu.</div>`;return;}
-  document.getElementById('reg-grid').innerHTML=active.map(mk=>{
-    const items=REG[mk.code]||[{icon:'📋',label:'Lokal planlagstiftning',desc:'Screening krävs'}];
-    const cands=CANDIDATES.filter(c=>c.market===mk.code);
-    return `<div class="reg-card"><div class="reg-market">${mk.flag} ${mk.name.toUpperCase()}</div>
-      ${items.map(item=>`<div class="reg-item"><span class="reg-icon">${item.icon}</span><div class="reg-text"><strong>${item.label}</strong><span>${item.desc}</span></div></div>`).join('')}
-      <div style="margin-top:10px;padding-top:8px;border-top:1px solid var(--border);font-size:10px;color:var(--muted)">${cands.length} kandidater</div>
-    </div>`;}).join('');
-}
+
+
 
 async function addMarket(){
   const code=document.getElementById('new-mkt-code').value.trim().toUpperCase().slice(0,3);
